@@ -1,31 +1,68 @@
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import ContentCard from "../components/ContentCard";
+import JournalEntry from "../components/JournalEntry";
+import AIChat from "../components/AIChat";
 import { Calendar, Bell, MessageCircle, Check } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
-  const features = [
-    {
-      title: "Daily Planning",
-      description: "Plan your day efficiently with our intuitive interface",
-      icon: <Calendar className="w-6 h-6" />,
-    },
-    {
-      title: "Smart Reminders",
-      description: "Never miss important tasks with intelligent notifications",
-      icon: <Bell className="w-6 h-6" />,
-    },
-    {
-      title: "Team Chat",
-      description: "Collaborate seamlessly with your team in real-time",
-      icon: <MessageCircle className="w-6 h-6" />,
-    },
-    {
-      title: "Task Management",
-      description: "Keep track of your progress with simple task management",
-      icon: <Check className="w-6 h-6" />,
-    },
-  ];
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([]);
+  const [entries, setEntries] = useState<Array<{
+    content: string;
+    type: 'incident' | 'feeling' | 'comment' | 'plan';
+    feedback?: string;
+  }>>([]);
+
+  const handleJournalEntry = async (entry: { content: string; type: 'incident' | 'feeling' | 'comment' | 'plan' }) => {
+    try {
+      const response = await fetch("/api/generate-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: entry.content, type: entry.type }),
+      });
+
+      const data = await response.json();
+      
+      setEntries([...entries, { ...entry, feedback: data.feedback }]);
+      toast({
+        title: "Entry saved!",
+        description: "AI feedback has been generated for your entry.",
+      });
+    } catch (error) {
+      console.error("Error saving entry:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your entry. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAIChat = async (message: string) => {
+    try {
+      setMessages([...messages, { role: 'user', content: message }]);
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await response.json();
+      
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+    } catch (error) {
+      console.error("Error in AI chat:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,36 +77,47 @@ const Index = () => {
             Welcome to Daily
           </span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6">
-            Organize Your Day
+            Your Personal Journal & AI Assistant
           </h1>
           <p className="text-secondary text-lg max-w-2xl mx-auto leading-relaxed">
-            Streamline your daily routine with our intuitive planning tools and stay on top of your tasks effortlessly.
+            Document your thoughts, get AI feedback, and chat with your personal AI assistant.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <ContentCard {...feature} />
-            </motion.div>
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold mb-4">Journal Entry</h2>
+            <JournalEntry onSubmit={handleJournalEntry} />
+            <div className="space-y-4">
+              {entries.map((entry, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm border border-border/50"
+                >
+                  <div className="mb-2">
+                    <span className="inline-block px-2 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">
+                      {entry.type}
+                    </span>
+                  </div>
+                  <p className="text-foreground mb-4">{entry.content}</p>
+                  {entry.feedback && (
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="text-sm text-secondary">{entry.feedback}</p>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold mb-4">AI Assistant</h2>
+            <AIChat onSendMessage={handleAIChat} messages={messages} />
+          </div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-16 text-center"
-        >
-          <button className="px-8 py-3 bg-primary text-white rounded-full font-medium hover:bg-primary/90 transition-colors duration-300 shadow-lg hover:shadow-xl">
-            Get Started
-          </button>
-        </motion.div>
       </div>
     </div>
   );
