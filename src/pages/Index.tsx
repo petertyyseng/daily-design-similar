@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState } from "react";
 import JournalEntry from "../components/JournalEntry";
@@ -62,6 +63,14 @@ const Index = () => {
           {
             role: "Mental Health Expert",
             content: data.expertFeedback
+          },
+          {
+            role: "Philosopher",
+            content: data.philosopherFeedback
+          },
+          {
+            role: "Priest",
+            content: data.priestFeedback
           }
         ]
       };

@@ -29,6 +29,14 @@ serve(async (req) => {
       {
         role: "Mental Health Expert",
         prompt: "As a mental health expert, provide professional perspective and well-being strategies related to this journal entry:"
+      },
+      {
+        role: "Philosopher",
+        prompt: "As a deep-thinking philosopher, provide wisdom and philosophical insights about the meaning and implications of this journal entry:"
+      },
+      {
+        role: "Priest",
+        prompt: "As a spiritual advisor and priest, offer guidance and spiritual perspective on this journal entry with compassion and understanding:"
       }
     ];
 
@@ -55,12 +63,14 @@ serve(async (req) => {
       return data.choices[0].message.content;
     });
 
-    const [therapistFeedback, coachFeedback, expertFeedback] = await Promise.all(feedbackPromises);
+    const [therapistFeedback, coachFeedback, expertFeedback, philosopherFeedback, priestFeedback] = await Promise.all(feedbackPromises);
 
     return new Response(JSON.stringify({
       therapistFeedback,
       coachFeedback,
-      expertFeedback
+      expertFeedback,
+      philosopherFeedback,
+      priestFeedback
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
