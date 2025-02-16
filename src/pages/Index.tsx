@@ -1,10 +1,10 @@
-
 import { motion } from "framer-motion";
 import { useState } from "react";
 import JournalEntry from "../components/JournalEntry";
-import { Calendar, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { format, isSameDay } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 
 interface JournalEntry {
   content: string;
@@ -31,7 +31,6 @@ const Index = () => {
     try {
       let imageUrl = "";
       if (entry.image) {
-        // In a real app, you would upload the image to a server here
         imageUrl = URL.createObjectURL(entry.image);
       }
 
