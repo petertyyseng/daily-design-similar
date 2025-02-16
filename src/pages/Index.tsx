@@ -1,35 +1,78 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import ContentCard from "../components/ContentCard";
 import JournalEntry from "../components/JournalEntry";
-import AIChat from "../components/AIChat";
-import { Calendar, Bell, MessageCircle, Check } from "lucide-react";
+import { Calendar, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { format, isSameDay } from "date-fns";
+
+interface JournalEntry {
+  content: string;
+  type: 'incident' | 'feeling' | 'comment' | 'plan';
+  date: Date;
+  image?: string;
+  aiComments?: {
+    role: string;
+    content: string;
+  }[];
+}
 
 const Index = () => {
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([]);
-  const [entries, setEntries] = useState<Array<{
-    content: string;
-    type: 'incident' | 'feeling' | 'comment' | 'plan';
-    feedback?: string;
-  }>>([]);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const handleJournalEntry = async (entry: { content: string; type: 'incident' | 'feeling' | 'comment' | 'plan' }) => {
+  const handleJournalEntry = async (entry: { 
+    content: string; 
+    type: 'incident' | 'feeling' | 'comment' | 'plan';
+    date: Date;
+    image?: File;
+  }) => {
     try {
+      let imageUrl = "";
+      if (entry.image) {
+        // In a real app, you would upload the image to a server here
+        imageUrl = URL.createObjectURL(entry.image);
+      }
+
       const response = await fetch("/api/generate-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: entry.content, type: entry.type }),
+        body: JSON.stringify({ 
+          content: entry.content, 
+          type: entry.type,
+          date: entry.date 
+        }),
       });
 
       const data = await response.json();
       
-      setEntries([...entries, { ...entry, feedback: data.feedback }]);
+      const newEntry: JournalEntry = {
+        ...entry,
+        date: entry.date,
+        ...(imageUrl && { image: imageUrl }),
+        aiComments: [
+          {
+            role: "Therapist",
+            content: data.therapistFeedback
+          },
+          {
+            role: "Life Coach",
+            content: data.coachFeedback
+          },
+          {
+            role: "Mental Health Expert",
+            content: data.expertFeedback
+          }
+        ]
+      };
+
+      setEntries(prev => [...prev, newEntry]);
+      setSelectedDate(entry.date);
+      
       toast({
         title: "Entry saved!",
-        description: "AI feedback has been generated for your entry.",
+        description: "AI professionals have analyzed your entry.",
       });
     } catch (error) {
       console.error("Error saving entry:", error);
@@ -41,28 +84,9 @@ const Index = () => {
     }
   };
 
-  const handleAIChat = async (message: string) => {
-    try {
-      setMessages([...messages, { role: 'user', content: message }]);
-
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
-      });
-
-      const data = await response.json();
-      
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
-    } catch (error) {
-      console.error("Error in AI chat:", error);
-      toast({
-        title: "Error",
-        description: "Failed to get AI response. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  const filteredEntries = entries.filter(entry => 
+    isSameDay(new Date(entry.date), selectedDate)
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,10 +101,10 @@ const Index = () => {
             Welcome to Daily
           </span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6">
-            Your Personal Journal & AI Assistant
+            Your Personal Journal & AI Insights
           </h1>
           <p className="text-secondary text-lg max-w-2xl mx-auto leading-relaxed">
-            Document your thoughts, get AI feedback, and chat with your personal AI assistant.
+            Document your thoughts and receive professional AI insights.
           </p>
         </motion.div>
 
@@ -88,8 +112,9 @@ const Index = () => {
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold mb-4">Journal Entry</h2>
             <JournalEntry onSubmit={handleJournalEntry} />
+            
             <div className="space-y-4">
-              {entries.map((entry, index) => (
+              {filteredEntries.map((entry, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -97,15 +122,36 @@ const Index = () => {
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                   className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm border border-border/50"
                 >
-                  <div className="mb-2">
+                  <div className="flex justify-between items-center mb-4">
                     <span className="inline-block px-2 py-1 text-xs font-medium text-primary bg-primary/10 rounded-full">
                       {entry.type}
                     </span>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(entry.date), "PPP")}
+                    </span>
                   </div>
-                  <p className="text-foreground mb-4">{entry.content}</p>
-                  {entry.feedback && (
-                    <div className="bg-muted p-4 rounded-lg">
-                      <p className="text-sm text-secondary">{entry.feedback}</p>
+                  
+                  {entry.image && (
+                    <div className="mb-4">
+                      <img
+                        src={entry.image}
+                        alt="Entry image"
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  
+                  <p className="text-foreground mb-6">{entry.content}</p>
+                  
+                  {entry.aiComments && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-foreground">Professional Insights</h3>
+                      {entry.aiComments.map((comment, idx) => (
+                        <div key={idx} className="bg-muted p-4 rounded-lg">
+                          <h4 className="font-medium text-primary mb-2">{comment.role}</h4>
+                          <p className="text-sm text-secondary">{comment.content}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </motion.div>
@@ -114,8 +160,15 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">AI Assistant</h2>
-            <AIChat onSendMessage={handleAIChat} messages={messages} />
+            <h2 className="text-2xl font-semibold mb-4">Calendar</h2>
+            <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm border border-border/50">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                className="rounded-md border"
+              />
+            </div>
           </div>
         </div>
       </div>

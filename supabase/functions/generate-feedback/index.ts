@@ -17,30 +17,51 @@ serve(async (req) => {
   try {
     const { content, type } = await req.json();
 
-    const prompt = `As an empathetic AI assistant, analyze this ${type} entry and provide constructive feedback:\n\n${content}`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+    const roles = [
+      {
+        role: "Therapist",
+        prompt: "As a compassionate therapist, provide supportive feedback and emotional insights about this journal entry:"
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an empathetic AI assistant that provides constructive feedback on journal entries.'
-          },
-          { role: 'user', content: prompt }
-        ],
-      }),
+      {
+        role: "Life Coach",
+        prompt: "As a motivational life coach, offer actionable advice and growth opportunities based on this journal entry:"
+      },
+      {
+        role: "Mental Health Expert",
+        prompt: "As a mental health expert, provide professional perspective and well-being strategies related to this journal entry:"
+      }
+    ];
+
+    const feedbackPromises = roles.map(async (role) => {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: role.prompt
+            },
+            { role: 'user', content }
+          ],
+        }),
+      });
+
+      const data = await response.json();
+      return data.choices[0].message.content;
     });
 
-    const data = await response.json();
-    const feedback = data.choices[0].message.content;
+    const [therapistFeedback, coachFeedback, expertFeedback] = await Promise.all(feedbackPromises);
 
-    return new Response(JSON.stringify({ feedback }), {
+    return new Response(JSON.stringify({
+      therapistFeedback,
+      coachFeedback,
+      expertFeedback
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
