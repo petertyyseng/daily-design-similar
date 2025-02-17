@@ -35,15 +35,24 @@ const Index = () => {
         imageUrl = URL.createObjectURL(entry.image);
       }
 
-      const response = await fetch("/api/generate-feedback", {
+      // Updated URL to use Supabase Edge Function
+      const response = await fetch("https://YOUR_PROJECT_REF.supabase.co/functions/v1/generate-feedback", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          // Add Supabase anon key if required
+          "Authorization": "Bearer YOUR_ANON_KEY"
+        },
         body: JSON.stringify({ 
           content: entry.content, 
           type: entry.type,
           date: entry.date 
         }),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
       
