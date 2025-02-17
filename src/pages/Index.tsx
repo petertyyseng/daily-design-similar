@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { format, isSameDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import { supabase } from "@/integrations/supabase/client";
 
 interface JournalEntry {
   content: string;
@@ -35,27 +36,18 @@ const Index = () => {
         imageUrl = URL.createObjectURL(entry.image);
       }
 
-      // Updated URL to use Supabase Edge Function
-      const response = await fetch("https://YOUR_PROJECT_REF.supabase.co/functions/v1/generate-feedback", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          // Add Supabase anon key if required
-          "Authorization": "Bearer YOUR_ANON_KEY"
-        },
-        body: JSON.stringify({ 
+      // Use Supabase client to call the Edge Function
+      const { data, error } = await supabase.functions.invoke('generate-feedback', {
+        body: { 
           content: entry.content, 
-          type: entry.type,
-          date: entry.date 
-        }),
+          type: entry.type 
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data = await response.json();
-      
       const newEntry: JournalEntry = {
         ...entry,
         date: entry.date,
