@@ -36,7 +36,6 @@ const Index = () => {
         imageUrl = URL.createObjectURL(entry.image);
       }
 
-      // Use Supabase client to call the Edge Function
       const { data, error } = await supabase.functions.invoke('generate-feedback', {
         body: { 
           content: entry.content, 
@@ -54,23 +53,23 @@ const Index = () => {
         ...(imageUrl && { image: imageUrl }),
         aiComments: [
           {
-            role: "Therapist",
+            role: "心理治療師",
             content: data.therapistFeedback
           },
           {
-            role: "Life Coach",
+            role: "生活教練",
             content: data.coachFeedback
           },
           {
-            role: "Mental Health Expert",
+            role: "心理健康專家",
             content: data.expertFeedback
           },
           {
-            role: "Philosopher",
+            role: "哲學家",
             content: data.philosopherFeedback
           },
           {
-            role: "Priest",
+            role: "心靈導師",
             content: data.priestFeedback
           }
         ]
@@ -80,14 +79,14 @@ const Index = () => {
       setSelectedDate(entry.date);
       
       toast({
-        title: "Entry saved!",
-        description: "AI professionals have analyzed your entry.",
+        title: "記錄已儲存！",
+        description: "AI 專家已分析您的記錄。",
       });
     } catch (error) {
       console.error("Error saving entry:", error);
       toast({
-        title: "Error",
-        description: "Failed to save your entry. Please try again.",
+        title: "錯誤",
+        description: "儲存記錄失敗，請重試。",
         variant: "destructive",
       });
     }
@@ -107,19 +106,19 @@ const Index = () => {
           className="text-center mb-16"
         >
           <span className="inline-block px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-full mb-4">
-            Welcome to Daily
+            歡迎使用每日日記
           </span>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6">
-            Your Personal Journal & AI Insights
+            你的個人日記與 AI 洞見
           </h1>
           <p className="text-secondary text-lg max-w-2xl mx-auto leading-relaxed">
-            Document your thoughts and receive professional AI insights.
+            記錄你的想法，獲得 AI 專業分析。
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Journal Entry</h2>
+            <h2 className="text-2xl font-semibold mb-4">日記記錄</h2>
             <JournalEntry onSubmit={handleJournalEntry} />
             
             <div className="space-y-4">
@@ -144,7 +143,7 @@ const Index = () => {
                     <div className="mb-4">
                       <img
                         src={entry.image}
-                        alt="Entry image"
+                        alt="記錄圖片"
                         className="w-full h-48 object-cover rounded-lg"
                       />
                     </div>
@@ -154,7 +153,7 @@ const Index = () => {
                   
                   {entry.aiComments && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-foreground">Professional Insights</h3>
+                      <h3 className="text-lg font-semibold text-foreground">專業見解</h3>
                       {entry.aiComments.map((comment, idx) => (
                         <div key={idx} className="bg-muted p-4 rounded-lg">
                           <h4 className="font-medium text-primary mb-2">{comment.role}</h4>
@@ -169,7 +168,7 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Calendar</h2>
+            <h2 className="text-2xl font-semibold mb-4">行事曆</h2>
             <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm border border-border/50">
               <Calendar
                 mode="single"

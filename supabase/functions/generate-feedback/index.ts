@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,13 +15,13 @@ serve(async (req) => {
     const { content, type } = await req.json();
     console.log('Processing journal entry:', { content, type });
 
-    // Generate AI responses based on the content
+    // Generate AI responses in Traditional Chinese
     const feedback = {
-      therapistFeedback: `As a therapist, I notice you're expressing ${type}. Let's explore these feelings together.`,
-      coachFeedback: `From a coaching perspective, I see opportunities for growth in how you handle this ${type}.`,
-      expertFeedback: `Your ${type} shows common patterns that we can work with using evidence-based strategies.`,
-      philosopherFeedback: `This ${type} raises interesting questions about human experience and meaning.`,
-      priestFeedback: `In times of ${type}, finding spiritual meaning can provide comfort and guidance.`
+      therapistFeedback: `作為一位治療師，我注意到你在表達${type}。讓我們一起探討這些感受。`,
+      coachFeedback: `從教練的角度來看，我看到你在處理${type}時有成長的機會。`,
+      expertFeedback: `你的${type}展現出一些我們可以用實證策略處理的常見模式。`,
+      philosopherFeedback: `這個${type}引發了關於人類經驗和意義的有趣問題。`,
+      priestFeedback: `在${type}的時刻，尋找精神上的意義能帶來安慰和指引。`
     };
 
     console.log('Generated feedback:', feedback);
