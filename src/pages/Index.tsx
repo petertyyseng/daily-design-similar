@@ -1,10 +1,9 @@
-
 import { motion } from "framer-motion";
 import { useState } from "react";
 import JournalEntry from "../components/JournalEntry";
 import { Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, startOfDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,11 +91,12 @@ const Index = () => {
     }
   };
 
-  const filteredEntries = entries.filter(entry => 
-    isSameDay(new Date(entry.date), selectedDate)
-  );
+  const filteredEntries = entries.filter(entry => {
+    const entryDate = startOfDay(new Date(entry.date));
+    const selectedStartOfDay = startOfDay(selectedDate);
+    return isSameDay(entryDate, selectedStartOfDay);
+  });
 
-  // Helper function to check if AI comments are valid
   const hasValidAIComments = (entry: JournalEntry) => {
     return entry.aiComments && 
            Array.isArray(entry.aiComments) && 
