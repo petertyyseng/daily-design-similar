@@ -51,7 +51,7 @@ const Index = () => {
         ...entry,
         date: entry.date,
         ...(imageUrl && { image: imageUrl }),
-        aiComments: [
+        aiComments: data ? [
           {
             role: "心理治療師",
             content: data.therapistFeedback
@@ -72,7 +72,7 @@ const Index = () => {
             role: "心靈導師",
             content: data.priestFeedback
           }
-        ]
+        ] : undefined
       };
 
       setEntries(prev => [...prev, newEntry]);
@@ -95,6 +95,14 @@ const Index = () => {
   const filteredEntries = entries.filter(entry => 
     isSameDay(new Date(entry.date), selectedDate)
   );
+
+  // Helper function to check if AI comments are valid
+  const hasValidAIComments = (entry: JournalEntry) => {
+    return entry.aiComments && 
+           Array.isArray(entry.aiComments) && 
+           entry.aiComments.length > 0 &&
+           entry.aiComments.every(comment => comment.role && comment.content);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,10 +159,10 @@ const Index = () => {
                   
                   <p className="text-foreground mb-6">{entry.content}</p>
                   
-                  {entry.aiComments && (
+                  {hasValidAIComments(entry) && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold text-foreground">專業見解</h3>
-                      {entry.aiComments.map((comment, idx) => (
+                      {entry.aiComments?.map((comment, idx) => (
                         <div key={idx} className="bg-muted p-4 rounded-lg">
                           <h4 className="font-medium text-primary mb-2">{comment.role}</h4>
                           <p className="text-sm text-secondary">{comment.content}</p>
