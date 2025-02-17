@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { useState } from "react";
 import JournalEntry from "../components/JournalEntry";
@@ -74,7 +75,18 @@ const Index = () => {
         ] : undefined
       };
 
-      setEntries(prev => [...prev, newEntry]);
+      // Ensure we're adding the new entry while preserving existing entries
+      setEntries(prev => {
+        // Create a copy of the previous entries array
+        const updatedEntries = [...prev];
+        // Add the new entry
+        updatedEntries.push(newEntry);
+        // Sort entries by date to maintain chronological order
+        return updatedEntries.sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+      });
+      
       setSelectedDate(entry.date);
       
       toast({
@@ -132,7 +144,7 @@ const Index = () => {
             <div className="space-y-4">
               {filteredEntries.map((entry, index) => (
                 <motion.div
-                  key={index}
+                  key={`${entry.date}-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
