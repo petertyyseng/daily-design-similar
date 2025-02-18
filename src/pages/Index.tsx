@@ -1,7 +1,8 @@
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import JournalEntry from "../components/JournalEntry";
-import { Check, History } from "lucide-react";
+import { History } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -152,16 +153,15 @@ const Index = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">日記記錄</h2>
-              {hasAICommentsForDate && (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="flex items-center gap-2"
-                >
-                  <History className="w-4 h-4" />
-                  {showHistory ? '隱藏 AI 分析' : '顯示 AI 分析'}
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                onClick={() => setShowHistory(!showHistory)}
+                className="flex items-center gap-2"
+                disabled={!hasAICommentsForDate}
+              >
+                <History className="w-4 h-4" />
+                {showHistory ? '隱藏 AI 分析' : '顯示 AI 分析'}
+              </Button>
             </div>
             
             <JournalEntry onSubmit={handleJournalEntry} />
@@ -230,6 +230,12 @@ const Index = () => {
                   }
                 }}
                 className="rounded-md border"
+                modifiers={{
+                  selected: date => isSameDay(date, selectedDate)
+                }}
+                modifiersStyles={{
+                  selected: { backgroundColor: 'var(--primary)' }
+                }}
               />
             </div>
           </div>
