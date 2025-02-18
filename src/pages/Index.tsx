@@ -1,12 +1,12 @@
-
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import JournalEntry from "../components/JournalEntry";
-import { Check } from "lucide-react";
+import { Check, History } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 interface JournalEntry {
   content: string;
@@ -23,6 +23,20 @@ const Index = () => {
   const { toast } = useToast();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showHistory, setShowHistory] = useState(true);
+
+  useEffect(() => {
+    const checkTodayComments = () => {
+      const todayEntries = entries.filter(entry => 
+        isSameDay(new Date(entry.date), new Date())
+      );
+      if (todayEntries.some(entry => hasValidAIComments(entry))) {
+        setShowHistory(true);
+      }
+    };
+    
+    checkTodayComments();
+  }, [entries]);
 
   const handleJournalEntry = async (entry: { 
     content: string; 
@@ -75,13 +89,9 @@ const Index = () => {
         ] : undefined
       };
 
-      // Ensure we're adding the new entry while preserving existing entries
       setEntries(prev => {
-        // Create a copy of the previous entries array
         const updatedEntries = [...prev];
-        // Add the new entry
         updatedEntries.push(newEntry);
-        // Sort entries by date to maintain chronological order
         return updatedEntries.sort((a, b) => 
           new Date(a.date).getTime() - new Date(b.date).getTime()
         );
@@ -116,6 +126,8 @@ const Index = () => {
            entry.aiComments.every(comment => comment.role && comment.content);
   };
 
+  const hasAICommentsForDate = filteredEntries.some(entry => hasValidAIComments(entry));
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-16">
@@ -138,7 +150,20 @@ const Index = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">日記記錄</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">日記記錄</h2>
+              {hasAICommentsForDate && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="flex items-center gap-2"
+                >
+                  <History className="w-4 h-4" />
+                  {showHistory ? '隱藏 AI 分析' : '顯示 AI 分析'}
+                </Button>
+              )}
+            </div>
+            
             <JournalEntry onSubmit={handleJournalEntry} />
             
             <div className="space-y-4">
@@ -171,8 +196,13 @@ const Index = () => {
                   
                   <p className="text-foreground mb-6">{entry.content}</p>
                   
-                  {hasValidAIComments(entry) && (
-                    <div className="space-y-4">
+                  {showHistory && hasValidAIComments(entry) && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-4"
+                    >
                       <h3 className="text-lg font-semibold text-foreground">專業見解</h3>
                       {entry.aiComments?.map((comment, idx) => (
                         <div key={idx} className="bg-muted p-4 rounded-lg">
@@ -180,7 +210,7 @@ const Index = () => {
                           <p className="text-sm text-secondary">{comment.content}</p>
                         </div>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
                 </motion.div>
               ))}
@@ -193,7 +223,12 @@ const Index = () => {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                    setShowHistory(true);
+                  }
+                }}
                 className="rounded-md border"
               />
             </div>
