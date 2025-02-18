@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import JournalEntry from "../components/JournalEntry";
@@ -24,20 +23,6 @@ const Index = () => {
   const { toast } = useToast();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [showHistory, setShowHistory] = useState(true);
-
-  useEffect(() => {
-    const checkTodayComments = () => {
-      const todayEntries = entries.filter(entry => 
-        isSameDay(new Date(entry.date), new Date())
-      );
-      if (todayEntries.some(entry => hasValidAIComments(entry))) {
-        setShowHistory(true);
-      }
-    };
-    
-    checkTodayComments();
-  }, [entries]);
 
   const handleJournalEntry = async (entry: { 
     content: string; 
@@ -151,19 +136,7 @@ const Index = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">日記記錄</h2>
-              <Button
-                variant="outline"
-                onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center gap-2"
-                disabled={!hasAICommentsForDate}
-              >
-                <History className="w-4 h-4" />
-                {showHistory ? '隱藏 AI 分析' : '顯示 AI 分析'}
-              </Button>
-            </div>
-            
+            <h2 className="text-2xl font-semibold">日記記錄</h2>
             <JournalEntry onSubmit={handleJournalEntry} />
             
             <div className="space-y-4">
@@ -196,7 +169,7 @@ const Index = () => {
                   
                   <p className="text-foreground mb-6">{entry.content}</p>
                   
-                  {showHistory && hasValidAIComments(entry) && (
+                  {hasValidAIComments(entry) ? (
                     <motion.div 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -211,9 +184,19 @@ const Index = () => {
                         </div>
                       ))}
                     </motion.div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-4">
+                      這個日期沒有 AI 分析記錄
+                    </p>
                   )}
                 </motion.div>
               ))}
+              
+              {filteredEntries.length === 0 && (
+                <p className="text-muted-foreground text-center py-4">
+                  這個日期沒有任何日記記錄
+                </p>
+              )}
             </div>
           </div>
           
@@ -223,12 +206,7 @@ const Index = () => {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                    setShowHistory(true);
-                  }
-                }}
+                onSelect={(date) => date && setSelectedDate(date)}
                 className="rounded-md border"
                 modifiers={{
                   selected: date => isSameDay(date, selectedDate)
@@ -237,6 +215,16 @@ const Index = () => {
                   selected: { backgroundColor: 'var(--primary)' }
                 }}
               />
+              <div className="mt-4 text-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedDate(selectedDate)}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <History className="w-4 h-4" />
+                  檢視選定日期的記錄
+                </Button>
+              </div>
             </div>
           </div>
         </div>
