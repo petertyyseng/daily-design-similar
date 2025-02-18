@@ -208,12 +208,11 @@ const Index = () => {
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
                 className="rounded-md border"
-                modifiers={{
-                  selected: date => isSameDay(date, selectedDate)
+                modifiersClassNames={{
+                  selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground"
                 }}
-                modifiersStyles={{
-                  selected: { backgroundColor: 'var(--primary)' }
-                }}
+                defaultMonth={selectedDate}
+                required
               />
               <div className="mt-4 text-center">
                 <Button
